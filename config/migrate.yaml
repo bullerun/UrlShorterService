@@ -1,0 +1,6 @@
+sourceURL: "db/migrations"
+storage:
+  user: "s368738"
+  host: "localhost"
+  port: "5432"
+  database: "studs"

@@ -8,21 +8,21 @@ import (
 )
 
 type Config struct {
-	ENV        string `yaml:"env" default:"local"`
-	Postgres   `yaml:"postgres"`
-	HTTPServer `yaml:"http_server"`
+	ENV        string `migrate.yaml:"env" default:"local"`
+	Postgres   `migrate.yaml:"postgres"`
+	HTTPServer `migrate.yaml:"http_server"`
 }
 type Postgres struct {
-	User     string `yaml:"user" default:"postgres"`
+	User     string `migrate.yaml:"user" default:"postgres"`
 	Password string `env:"POSTGRES_PASSWORD"`
-	Host     string `yaml:"host" default:"localhost"`
-	Port     string `yaml:"port" default:"5432"`
-	Database string `yaml:"database" default:"postgres"`
+	Host     string `migrate.yaml:"host" default:"localhost"`
+	Port     string `migrate.yaml:"port" default:"5432"`
+	Database string `migrate.yaml:"database" default:"postgres"`
 }
 type HTTPServer struct {
-	Addr        string        `yaml:"address" default:"localhost:8080"`
-	TimeOut     time.Duration `yaml:"timeout" default:"10s"`
-	IdleTimeout time.Duration `yaml:"idle_timeout" default:"10s"`
+	Addr        string        `migrate.yaml:"address" default:"localhost:8080"`
+	TimeOut     time.Duration `migrate.yaml:"timeout" default:"10s"`
+	IdleTimeout time.Duration `migrate.yaml:"idle_timeout" default:"10s"`
 }
 type Path struct {
 	configPath string
@@ -42,7 +42,9 @@ func New() *Config {
 	if err := cleanenv.ReadConfig(configPath, &config); err != nil {
 		log.Fatalf("cannot read config: %s", err)
 	}
-	config.Postgres.Password = getPGPassword()
+	if config.Postgres.Password == "" {
+		config.Postgres.Password = getPGPassword()
+	}
 	return &config
 }
 func getConfigPath() string {
