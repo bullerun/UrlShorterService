@@ -22,20 +22,21 @@ var (
 	ErrTokenInvalid = errors.New("token invalid")
 )
 
-func IsCorrectJwtToken(jwtString string) (bool, error) {
+func DecodeJWT(jwtString string) (int64, error) {
 	token, err := jwt.Parse(jwtString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secretKey), nil
 	})
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		id := int64(claims["id"].(float64))
 		expiration := int64(claims["exp"].(float64))
 		if expiration > time.Now().Unix() {
-			return true, nil
+			return id, nil
 		} else {
-			return false, ErrTokenExpired
+			return 0, ErrTokenExpired
 		}
 	}
-	return false, ErrTokenInvalid
+	return 0, ErrTokenInvalid
 }

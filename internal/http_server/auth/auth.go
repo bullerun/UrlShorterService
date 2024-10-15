@@ -2,11 +2,12 @@ package auth
 
 import (
 	"UrlShorterService/internal/entity"
-	"UrlShorterService/internal/http-server/response"
+	"UrlShorterService/internal/http_server/response"
 	"UrlShorterService/internal/services/jwt"
 	"UrlShorterService/internal/services/user_service"
 	"context"
 	"github.com/go-chi/render"
+	_ "github.com/go-playground/validator/v10"
 	"log/slog"
 	"net/http"
 )
@@ -19,9 +20,6 @@ type registerRequest struct {
 type loginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,alphanum"`
-}
-type Response struct {
-	message string
 }
 type UserRepositoryInterface interface {
 	AddUser(ctx context.Context, user *entity.User) (int64, error)

@@ -17,10 +17,14 @@ const (
 	StatusError = "Error"
 )
 
-func OK(msg string) Response {
+func OK(msg ...string) Response {
+	var message string
+	if len(msg) > 0 {
+		message = msg[0]
+	}
 	return Response{
 		Status:  StatusOK,
-		Message: msg,
+		Message: message,
 	}
 }
 

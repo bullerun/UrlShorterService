@@ -2,9 +2,11 @@ package main
 
 import (
 	"UrlShorterService/internal/config"
-	"UrlShorterService/internal/http-server/auth"
-	mw "UrlShorterService/internal/http-server/middleware"
+	"UrlShorterService/internal/http_server/auth"
+	"UrlShorterService/internal/http_server/links"
+	mw "UrlShorterService/internal/http_server/middleware"
 	"UrlShorterService/internal/repository/connection/postgres"
+	link "UrlShorterService/internal/repository/link/repository"
 	user "UrlShorterService/internal/repository/user/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,17 +27,13 @@ func main() {
 	pool := postgres.InitPool(cfg.Postgres)
 	defer pool.Close()
 	userRepository := user.New(pool)
+	linkRepository := link.New(pool)
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Post("/login", auth.Login(log, userRepository))
 	router.Post("/register", auth.Register(log, userRepository))
-	router.With(mw.Authentication).Post("/hehe", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("hehe you authorised, you are pidor"))
-	})
-	//router.Post("/url", save.New(log, storage))
-	//router.Get("/{alias}", redirect.New(log, storage))
+	router.With(mw.Authentication).Post("/url", links.Save(log, linkRepository))
 	server := &http.Server{
 		Addr:         cfg.Addr,
 		Handler:      router,
@@ -43,19 +41,16 @@ func main() {
 		WriteTimeout: cfg.HTTPServer.TimeOut,
 		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
 	}
-	err := server.ListenAndServe()
-	if err != nil {
-		log.Error("failed to start server", "error", err)
-	}
-	log.Error("server stopped")
-	//TODO storage
-	//TODO handlers
-	//TODO jwt service
-	//TODO auth
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Error("failed to start server", "error", err)
+		}
+	}()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	<-stop
-
+	log.Error("server stopped")
 }
 func initLogger(env string) *slog.Logger {
 	var logger *slog.Logger
